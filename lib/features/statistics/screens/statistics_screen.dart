@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/services/stats_service.dart';
-import '../../core/models/connection_config.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/services/stats_service.dart';
+import '../../../core/models/connection_config.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -50,13 +50,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Connection Status
             _buildConnectionCard(isDark),
             const SizedBox(height: 16),
-            // CPU Usage Chart
             _buildCpuChart(isDark),
             const SizedBox(height: 16),
-            // Resource Gauges
             Row(
               children: [
                 Expanded(child: _buildGauge('CPU', _stats.cpuUsage, '%', isDark)),
@@ -67,7 +64,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            // Processes
             _buildProcessesList(isDark),
           ],
         ),
@@ -144,7 +140,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppColors.lightAccent.withOpacity(0.2),
+                        color: AppColors.lightAccent.withValues(alpha: 0.2),
                       ),
                     ),
                   ],
@@ -173,7 +169,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: CircularProgressIndicator(
                 value: value / 100,
                 strokeWidth: 6,
-                backgroundColor: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+                backgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ),

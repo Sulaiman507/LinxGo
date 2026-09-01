@@ -4,6 +4,15 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'app.dart';
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const ProviderScope(
+      child: LinxGoApp(),
+    ),
+  );
+}
+
 class LinxGoApp extends ConsumerWidget {
   const LinxGoApp({super.key});
 

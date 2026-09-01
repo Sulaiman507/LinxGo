@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/services/vnc_service.dart';
-import '../../core/services/connection_service.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/services/vnc_service.dart';
+import '../../../core/services/connection_service.dart';
 
 class DesktopScreen extends StatefulWidget {
   const DesktopScreen({super.key});
