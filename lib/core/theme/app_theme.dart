@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
-/// App theme configuration
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
@@ -21,12 +20,6 @@ class AppTheme {
         foregroundColor: AppColors.lightText,
         elevation: 0,
         centerTitle: true,
-      ),
-      cardTheme: CardTheme(
-        color: AppColors.lightSurface,
-        elevation: 2,
-        shadowColor: AppColors.lightPrimary.withOpacity(0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -51,7 +44,7 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.lightTextSecondary.withOpacity(0.2)),
+          borderSide: BorderSide(color: AppColors.lightTextSecondary.withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -80,12 +73,6 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
       ),
-      cardTheme: CardTheme(
-        color: AppColors.darkSurface,
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkAccent,
@@ -109,7 +96,7 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.darkTextSecondary.withOpacity(0.2)),
+          borderSide: BorderSide(color: AppColors.darkTextSecondary.withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

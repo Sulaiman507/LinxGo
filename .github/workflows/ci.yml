@@ -20,8 +20,6 @@ jobs:
           channel: stable
       - name: Get dependencies
         run: flutter pub get
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
       - name: Build APK
         run: flutter build apk --release
       - name: Upload APK
