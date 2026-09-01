@@ -57,79 +57,83 @@ class _DesktopScreenState extends State<DesktopScreen> {
                 ),
               ],
             ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Container(
-              margin: _isFullscreen ? EdgeInsets.zero : const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-                borderRadius: _isFullscreen ? null : BorderRadius.circular(12),
-              ),
-              child: ClipRRect(
-                borderRadius: _isFullscreen ? BorderRadius.zero : BorderRadius.circular(12),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 3.0,
-                  child: Container(
-                    color: const Color(0xFF2D2D2D),
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.desktop_windows, size: 64, color: Color(0xFFE94560)),
-                          SizedBox(height: 16),
-                          Text('Linux Desktop', style: TextStyle(color: Colors.white, fontSize: 18)),
-                          SizedBox(height: 8),
-                          Text('VNC: localhost:5901', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          SizedBox(height: 4),
-                          Text('WebSocket: localhost:6080', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        ],
+      body: SafeArea(
+        top: !_isFullscreen,
+        bottom: true,
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                margin: _isFullscreen ? EdgeInsets.zero : const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                  borderRadius: _isFullscreen ? null : BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: _isFullscreen ? BorderRadius.zero : BorderRadius.circular(12),
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 3.0,
+                    child: Container(
+                      color: const Color(0xFF2D2D2D),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.desktop_windows, size: 64, color: Color(0xFFE94560)),
+                            SizedBox(height: 16),
+                            Text('Linux Desktop', style: TextStyle(color: Colors.white, fontSize: 18)),
+                            SizedBox(height: 8),
+                            Text('VNC: localhost:5901', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                            SizedBox(height: 4),
+                            Text('WebSocket: localhost:6080', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (!_isFullscreen)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
+            if (!_isFullscreen)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildToolbarBtn(Icons.keyboard, '⌈️', () => setState(() => _showKeyboard = !_showKeyboard)),
+                    _buildToolbarBtn(Icons.mouse, '🖱️', () => _showMouseOptions(context)),
+                    _buildToolbarBtn(Icons.content_copy, '📋', () {}),
+                    _buildToolbarBtn(Icons.zoom_in, '🔍+', () => setState(() => _zoom = (_zoom + 0.25).clamp(0.5, 3.0))),
+                    _buildToolbarBtn(Icons.zoom_out, '🔍−', () => setState(() => _zoom = (_zoom - 0.25).clamp(0.5, 3.0))),
+                    _buildToolbarBtn(Icons.folder, '📁', () => context.go('/home/files')),
+                    _buildToolbarBtn(Icons.terminal, '💻', () => context.go('/home/terminal')),
+                  ],
+                ),
+              ),
+            if (_showKeyboard)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildKey('Ctrl'),
+                    _buildKey('Alt'),
+                    _buildKey('Tab'),
+                    _buildKey('Esc'),
+                    _buildKey('↑'),
+                    _buildKey('↓'),
+                    _buildKey('←'),
+                    _buildKey('→'),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildToolbarBtn(Icons.keyboard, '⌈️', () => setState(() => _showKeyboard = !_showKeyboard)),
-                  _buildToolbarBtn(Icons.mouse, '🖱️', () => _showMouseOptions(context)),
-                  _buildToolbarBtn(Icons.content_copy, '📋', () {}),
-                  _buildToolbarBtn(Icons.zoom_in, '🔍+', () => setState(() => _zoom = (_zoom + 0.25).clamp(0.5, 3.0))),
-                  _buildToolbarBtn(Icons.zoom_out, '🔍−', () => setState(() => _zoom = (_zoom - 0.25).clamp(0.5, 3.0))),
-                  _buildToolbarBtn(Icons.folder, '📁', () => context.go('/home/files')),
-                  _buildToolbarBtn(Icons.terminal, '💻', () => context.go('/home/terminal')),
-                ],
-              ),
-            ),
-          if (_showKeyboard)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildKey('Ctrl'),
-                  _buildKey('Alt'),
-                  _buildKey('Tab'),
-                  _buildKey('Esc'),
-                  _buildKey('↑'),
-                  _buildKey('↓'),
-                  _buildKey('←'),
-                  _buildKey('→'),
-                ],
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
