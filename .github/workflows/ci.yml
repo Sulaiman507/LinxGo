@@ -21,18 +21,11 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --debug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: LinxGo
-          path: build/app/outputs/flutter-apk/app-release.apk
-      - name: Create Release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.0
-          name: LinxGo v1.0.0
-          files: build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: LinxGo-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+      - name: List APK
+        run: ls -la build/app/outputs/flutter-apk/
