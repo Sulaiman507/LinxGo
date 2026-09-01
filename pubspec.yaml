@@ -1,0 +1,78 @@
+name: linxgo
+description: Linux Desktop Environment for Android - Flutter + VNC
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Storage
+  shared_preferences: ^2.3.4
+  path_provider: ^2.1.5
+
+  # UI
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.16
+  shimmer: ^3.0.0
+  fl_chart: ^0.70.2
+
+  # VNC / Connection
+  web_socket_channel: ^3.0.1
+  webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.3.0
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # Device Info
+  device_info_plus: ^11.2.0
+  battery_plus: ^6.2.1
+
+  # Icons
+  cupertino_icons: ^1.0.8
+  icons_launcher: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  riverpod_generator: ^2.6.3
+  build_runner: ^2.4.14
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.6.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/
+    - assets/novnc/
+
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700
