@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/vnc_service.dart';
-import '../../../core/services/connection_service.dart';
 
 class DesktopScreen extends StatefulWidget {
   const DesktopScreen({super.key});
@@ -12,26 +12,58 @@ class DesktopScreen extends StatefulWidget {
 }
 
 class _DesktopScreenState extends State<DesktopScreen> {
-  late VNCService _vncService;
+  late final WebViewController _controller;
   bool _isFullscreen = false;
   bool _showKeyboard = false;
-  double _zoom = 1.0;
+  bool _isLoading = true;
+  String _statusMessage = 'Connecting to VNC...';
 
   @override
   void initState() {
     super.initState();
-    _vncService = VNCService(ConnectionService());
+    _initWebView();
   }
 
-  @override
-  void dispose() {
-    _vncService.dispose();
-    super.dispose();
+  Future<void> _initWebView() async {
+    // Load HTML file from assets
+    final htmlString = await rootBundle.loadString('assets/novnc/vnc.html');
+    
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFF1A1A2E))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) {
+            setState(() => _isLoading = true);
+          },
+          onPageFinished: (url) {
+            setState(() => _isLoading = false);
+          },
+          onWebResourceError: (error) {
+            setState(() {
+              _isLoading = false;
+              _statusMessage = 'Error: ${error.description}';
+            });
+          },
+        ),
+      )
+      ..loadHtmlString(htmlString, baseUrl: 'http://localhost');
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _reload() async {
+    if (_controller != null) {
+      await _controller.reload();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasWebView = _controller != null;
 
     return Scaffold(
       appBar: _isFullscreen
@@ -44,12 +76,8 @@ class _DesktopScreenState extends State<DesktopScreen> {
                   onPressed: () => setState(() => _showKeyboard = !_showKeyboard),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.mouse),
-                  onPressed: () => _showMouseOptions(context),
-                ),
-                IconButton(
-                  icon: Icon(_zoom == 1.0 ? Icons.zoom_in : Icons.zoom_out),
-                  onPressed: () => setState(() => _zoom = _zoom == 1.0 ? 1.5 : 1.0),
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _reload,
                 ),
                 IconButton(
                   icon: Icon(_isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
@@ -71,26 +99,50 @@ class _DesktopScreenState extends State<DesktopScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: _isFullscreen ? BorderRadius.zero : BorderRadius.circular(12),
-                  child: InteractiveViewer(
-                    minScale: 0.5,
-                    maxScale: 3.0,
-                    child: Container(
-                      color: const Color(0xFF2D2D2D),
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.desktop_windows, size: 64, color: Color(0xFFE94560)),
-                            SizedBox(height: 16),
-                            Text('Linux Desktop', style: TextStyle(color: Colors.white, fontSize: 18)),
-                            SizedBox(height: 8),
-                            Text('VNC: localhost:5901', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                            SizedBox(height: 4),
-                            Text('WebSocket: localhost:6080', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          ],
+                  child: Stack(
+                    children: [
+                      // WebView with noVNC
+                      if (hasWebView)
+                        WebViewWidget(controller: _controller)
+                      else
+                        Container(
+                          color: const Color(0xFF2D2D2D),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.desktop_windows, size: 64, color: Color(0xFFE94560)),
+                                const SizedBox(height: 16),
+                                const Text('Linux Desktop', style: TextStyle(color: Colors.white, fontSize: 18)),
+                                const SizedBox(height: 8),
+                                Text('VNC: localhost:5901', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                const SizedBox(height: 4),
+                                Text('WebSocket: localhost:6080', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      // Loading overlay
+                      if (_isLoading && hasWebView)
+                        Container(
+                          color: const Color(0xFF1A1A2E),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation(Color(0xFFE94560)),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _statusMessage,
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -105,12 +157,10 @@ class _DesktopScreenState extends State<DesktopScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildToolbarBtn(Icons.keyboard, '⌈️', () => setState(() => _showKeyboard = !_showKeyboard)),
-                    _buildToolbarBtn(Icons.mouse, '🖱️', () => _showMouseOptions(context)),
+                    _buildToolbarBtn(Icons.mouse, '🖱️', () {}),
                     _buildToolbarBtn(Icons.content_copy, '📋', () {}),
-                    _buildToolbarBtn(Icons.zoom_in, '🔍+', () => setState(() => _zoom = (_zoom + 0.25).clamp(0.5, 3.0))),
-                    _buildToolbarBtn(Icons.zoom_out, '🔍−', () => setState(() => _zoom = (_zoom - 0.25).clamp(0.5, 3.0))),
-                    _buildToolbarBtn(Icons.folder, '📁', () => context.go('/home/files')),
-                    _buildToolbarBtn(Icons.terminal, '💻', () => context.go('/home/terminal')),
+                    _buildToolbarBtn(Icons.refresh, '🔄', _reload),
+                    _buildToolbarBtn(Icons.terminal, '💻', () {}),
                   ],
                 ),
               ),
@@ -163,34 +213,6 @@ class _DesktopScreenState extends State<DesktopScreen> {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-      ),
-    );
-  }
-
-  void _showMouseOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Mouse Mode', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.touch_app),
-              title: const Text('Direct Touch'),
-              subtitle: const Text('Tap to click, long press for right click'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.mouse),
-              title: const Text('Touchpad Mode'),
-              subtitle: const Text('Move finger to move cursor, tap to click'),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
       ),
     );
   }

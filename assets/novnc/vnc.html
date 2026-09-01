@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linux Desktop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #1a1a2e; 
+      overflow: hidden; 
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      touch-action: none;
+    }
+    #screen { 
+      width: 100vw; 
+      height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    #status {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #e94560;
+      text-align: center;
+      z-index: 100;
+    }
+    #status .icon { font-size: 48px; margin-bottom: 16px; }
+    #status .text { font-size: 14px; color: #6b7280; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <div id="status">
+    <div class="icon">🖥️</div>
+    <div class="text" id="statusText">Connecting...</div>
+  </div>
+  <div id="screen"></div>
+  <script type="module">
+    import RFB from 'https://cdn.jsdelivr.net/npm/@novnc/novnc@1.4.0/+esm';
+    
+    const statusEl = document.getElementById('status');
+    const statusText = document.getElementById('statusText');
+    const screenEl = document.getElementById('screen');
+    
+    // Get URL params
+    const params = new URLSearchParams(window.location.search);
+    const host = params.get('host') || 'localhost';
+    const port = params.get('port') || '6080';
+    const password = params.get('password') || '';
+    
+    // Build WebSocket URL
+    const wsUrl = `ws://${host}:${port}`;
+    
+    statusText.textContent = `Connecting to ${wsUrl}...`;
+    
+    try {
+      const rfb = new RFB(screenEl, wsUrl, {
+        shared: true,
+        credentials: { password: password }
+      });
+      
+      rfb.addEventListener("connect", () => {
+        statusEl.style.display = 'none';
+        console.log('Connected to VNC server');
+      });
+      
+      rfb.addEventListener("disconnect", (detail) => {
+        statusEl.style.display = 'flex';
+        statusText.textContent = `Disconnected: ${detail.detail.reason || 'Unknown'}`;
+      });
+      
+      rfb.addEventListener("credentialsrequired", () => {
+        statusEl.style.display = 'flex';
+        statusText.textContent = 'Password required';
+      });
+      
+      rfb.addEventListener("securityfailure", (detail) => {
+        statusEl.style.display = 'flex';
+        statusText.textContent = `Security error: ${detail.detail.reason}`;
+      });
+      
+      rfb.scaleViewport = true;
+      rfb.resizeSession = true;
+      
+    } catch (e) {
+      statusEl.style.display = 'flex';
+      statusText.textContent = `Error: ${e.message}`;
+      console.error('VNC connection error:', e);
+    }
+  </script>
+</body>
+</html>
