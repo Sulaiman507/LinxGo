@@ -27,8 +27,26 @@ jobs:
           cp -r lib scaffold/lib
           cp -r assets scaffold/assets 2>/dev/null || true
           cp pubspec.yaml analysis_options.yaml scaffold/
-          # Copy Android config files
-          cp -r android scaffold/android 2>/dev/null || true
+      - name: Patch Android manifest for cleartext traffic
+        run: |
+          # Create network security config
+          mkdir -p scaffold/android/app/src/main/res/xml
+          cat > scaffold/android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          EOF
+          
+          # Patch AndroidManifest.xml
+          sed -i 's|android:usesCleartextTraffic="true"|android:usesCleartextTraffic="true"\n        android:networkSecurityConfig="@xml/network_security_config"|' scaffold/android/app/src/main/AndroidManifest.xml
+          
+          echo "✅ Android manifest patched"
+          cat scaffold/android/app/src/main/AndroidManifest.xml | head -20
       - name: Get dependencies
         working-directory: scaffold
         run: flutter pub get
