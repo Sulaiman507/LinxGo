@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -15,8 +13,8 @@ class _DesktopScreenState extends State<DesktopScreen> {
   late final WebViewController _controller;
   bool _isFullscreen = false;
   bool _showKeyboard = false;
-  bool _isLoading = true;
-  String _statusMessage = 'Connecting to VNC...';
+  bool _isConnected = false;
+  String _statusMessage = 'Connecting...';
 
   @override
   void initState() {
@@ -24,30 +22,34 @@ class _DesktopScreenState extends State<DesktopScreen> {
     _initWebView();
   }
 
-  Future<void> _initWebView() async {
-    // Load HTML file from assets
-    final htmlString = await rootBundle.loadString('assets/novnc/vnc.html');
-    
+  void _initWebView() {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF1A1A2E))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            setState(() => _isLoading = true);
+            setState(() {
+              _isConnected = false;
+              _statusMessage = 'Loading...';
+            });
           },
           onPageFinished: (url) {
-            setState(() => _isLoading = false);
+            setState(() {
+              _isConnected = true;
+              _statusMessage = 'Connected';
+            });
           },
           onWebResourceError: (error) {
             setState(() {
-              _isLoading = false;
+              _isConnected = false;
               _statusMessage = 'Error: ${error.description}';
             });
           },
         ),
       )
-      ..loadHtmlString(htmlString, baseUrl: 'http://localhost');
+      // Load noVNC directly from websockify server
+      ..loadRequest(Uri.parse('http://127.0.0.1:6080'));
 
     if (mounted) {
       setState(() {});
@@ -55,15 +57,12 @@ class _DesktopScreenState extends State<DesktopScreen> {
   }
 
   Future<void> _reload() async {
-    if (_controller != null) {
-      await _controller.reload();
-    }
+    await _controller.reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasWebView = _controller != null;
 
     return Scaffold(
       appBar: _isFullscreen
@@ -101,29 +100,10 @@ class _DesktopScreenState extends State<DesktopScreen> {
                   borderRadius: _isFullscreen ? BorderRadius.zero : BorderRadius.circular(12),
                   child: Stack(
                     children: [
-                      // WebView with noVNC
-                      if (hasWebView)
-                        WebViewWidget(controller: _controller)
-                      else
-                        Container(
-                          color: const Color(0xFF2D2D2D),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.desktop_windows, size: 64, color: Color(0xFFE94560)),
-                                const SizedBox(height: 16),
-                                const Text('Linux Desktop', style: TextStyle(color: Colors.white, fontSize: 18)),
-                                const SizedBox(height: 8),
-                                Text('VNC: localhost:5901', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                const SizedBox(height: 4),
-                                Text('WebSocket: localhost:6080', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      // Loading overlay
-                      if (_isLoading && hasWebView)
+                      // WebView with noVNC from websockify
+                      WebViewWidget(controller: _controller),
+                      // Status overlay
+                      if (!_isConnected)
                         Container(
                           color: const Color(0xFF1A1A2E),
                           child: Center(
@@ -137,6 +117,15 @@ class _DesktopScreenState extends State<DesktopScreen> {
                                 Text(
                                   _statusMessage,
                                   style: const TextStyle(color: Colors.white70),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'VNC: localhost:5901',
+                                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                                ),
+                                const Text(
+                                  'WebSocket: localhost:6080',
+                                  style: TextStyle(color: Colors.grey, fontSize: 12),
                                 ),
                               ],
                             ),
