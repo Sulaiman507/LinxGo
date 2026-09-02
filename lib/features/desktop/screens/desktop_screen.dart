@@ -13,8 +13,6 @@ class _DesktopScreenState extends State<DesktopScreen> {
   late final WebViewController _controller;
   bool _isFullscreen = false;
   bool _showKeyboard = false;
-  bool _isConnected = false;
-  String _statusMessage = 'Connecting...';
 
   @override
   void initState() {
@@ -25,65 +23,39 @@ class _DesktopScreenState extends State<DesktopScreen> {
   void _initWebView() {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF1A1A2E))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (url) {
-            setState(() {
-              _isConnected = false;
-              _statusMessage = 'Loading...';
-            });
-          },
-          onPageFinished: (url) {
-            setState(() {
-              _isConnected = true;
-              _statusMessage = 'Connected';
-            });
-          },
-          onWebResourceError: (error) {
-            setState(() {
-              _isConnected = false;
-              _statusMessage = 'Error: ${error.description}';
-            });
-          },
-        ),
-      )
-      // Load noVNC directly from websockify server
-      ..loadRequest(Uri.parse('http://127.0.0.1:6080'));
+      ..setBackgroundColor(const Color(0xFF0A0A1A))
+      ..setNavigationDelegate(NavigationDelegate(
+        onWebResourceError: (error) {
+          debugPrint('WebView error: ${error.description}');
+        },
+      ))
+      // Load noVNC with auto-connect parameters
+      ..loadRequest(Uri.parse('http://127.0.0.1:6080/vnc.html?host=127.0.0.1&port=6080&autoconnect=true&password=password'));
 
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  Future<void> _reload() async {
-    await _controller.reload();
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      appBar: _isFullscreen
-          ? null
-          : AppBar(
-              title: const Text('🖥️ Desktop'),
-              actions: [
-                IconButton(
-                  icon: Icon(_showKeyboard ? Icons.keyboard_hide : Icons.keyboard),
-                  onPressed: () => setState(() => _showKeyboard = !_showKeyboard),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _reload,
-                ),
-                IconButton(
-                  icon: Icon(_isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
-                  onPressed: () => setState(() => _isFullscreen = !_isFullscreen),
-                ),
-              ],
-            ),
+      appBar: _isFullscreen ? null : AppBar(
+        title: const Text('🖥️ Desktop'),
+        actions: [
+          IconButton(
+            icon: Icon(_showKeyboard ? Icons.keyboard_hide : Icons.keyboard),
+            onPressed: () => setState(() => _showKeyboard = !_showKeyboard),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _controller.reload(),
+          ),
+          IconButton(
+            icon: Icon(_isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
+            onPressed: () => setState(() => _isFullscreen = !_isFullscreen),
+          ),
+        ],
+      ),
       body: SafeArea(
         top: !_isFullscreen,
         bottom: true,
@@ -98,41 +70,7 @@ class _DesktopScreenState extends State<DesktopScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: _isFullscreen ? BorderRadius.zero : BorderRadius.circular(12),
-                  child: Stack(
-                    children: [
-                      // WebView with noVNC from websockify
-                      WebViewWidget(controller: _controller),
-                      // Status overlay
-                      if (!_isConnected)
-                        Container(
-                          color: const Color(0xFF1A1A2E),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation(Color(0xFFE94560)),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _statusMessage,
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'VNC: localhost:5901',
-                                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                                ),
-                                const Text(
-                                  'WebSocket: localhost:6080',
-                                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                  child: WebViewWidget(controller: _controller),
                 ),
               ),
             ),
@@ -145,11 +83,10 @@ class _DesktopScreenState extends State<DesktopScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildToolbarBtn(Icons.keyboard, '⌈️', () => setState(() => _showKeyboard = !_showKeyboard)),
-                    _buildToolbarBtn(Icons.mouse, '🖱️', () {}),
-                    _buildToolbarBtn(Icons.content_copy, '📋', () {}),
-                    _buildToolbarBtn(Icons.refresh, '🔄', _reload),
-                    _buildToolbarBtn(Icons.terminal, '💻', () {}),
+                    _buildBtn(Icons.keyboard, '⌈️', () => setState(() => _showKeyboard = !_showKeyboard)),
+                    _buildBtn(Icons.mouse, '🖱️', () {}),
+                    _buildBtn(Icons.refresh, '🔄', () => _controller.reload()),
+                    _buildBtn(Icons.terminal, '💻', () {}),
                   ],
                 ),
               ),
@@ -160,14 +97,7 @@ class _DesktopScreenState extends State<DesktopScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildKey('Ctrl'),
-                    _buildKey('Alt'),
-                    _buildKey('Tab'),
-                    _buildKey('Esc'),
-                    _buildKey('↑'),
-                    _buildKey('↓'),
-                    _buildKey('←'),
-                    _buildKey('→'),
+                    _buildKey('Ctrl'), _buildKey('Alt'), _buildKey('Tab'), _buildKey('Esc'),
                   ],
                 ),
               ),
@@ -177,17 +107,13 @@ class _DesktopScreenState extends State<DesktopScreen> {
     );
   }
 
-  Widget _buildToolbarBtn(IconData icon, String label, VoidCallback onTap) {
+  Widget _buildBtn(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10)),
-        ],
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 20), const SizedBox(height: 2),
+        Text(label, style: const TextStyle(fontSize: 10)),
+      ]),
     );
   }
 
