@@ -2,9 +2,8 @@ name: LinxGo CI
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -21,21 +20,31 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+      - name: Create project scaffold
+        run: |
+          flutter create -t app --org com.linxgo --project-name linxgo scaffold
+          rm -rf scaffold/lib scaffold/test
+          cp -r lib scaffold/lib
+          cp -r assets scaffold/assets 2>/dev/null || true
+          cp pubspec.yaml scaffold/
+          cp analysis_options.yaml scaffold/ 2>/dev/null || true
       - name: Get dependencies
+        working-directory: scaffold
         run: flutter pub get
       - name: Build APK
+        working-directory: scaffold
         run: flutter build apk --release
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: List APK
+        run: ls -la scaffold/build/app/outputs/flutter-apk/ 2>/dev/null || find . -name "*.apk" 2>/dev/null
+      - uses: actions/upload-artifact@v4
         with:
           name: LinxGo
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: scaffold/build/app/outputs/flutter-apk/app-release.apk
       - name: Create Release
-        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
-          name: LinxGo Build ${{ github.run_number }}
-          files: build/app/outputs/flutter-apk/app-release.apk
+          name: LinxGo v${{ github.run_number }}
+          files: scaffold/build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
