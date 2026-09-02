@@ -30,7 +30,7 @@ class _DesktopScreenState extends State<DesktopScreen> {
         },
       ))
       // Load noVNC with auto-connect parameters
-      ..loadRequest(Uri.parse('http://127.0.0.1:6080/vnc.html?host=127.0.0.1&port=6080&autoconnect=true&password=password'));
+      ..loadRequest(Uri.parse('http://127.0.0.1:6080/vnc.html?host=127.0.0.1&port=6080&autoconnect=true&password=123456'));
 
     if (mounted) setState(() {});
   }

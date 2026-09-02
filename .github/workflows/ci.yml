@@ -31,7 +31,7 @@ jobs:
         run: |
           # Create network security config
           mkdir -p scaffold/android/app/src/main/res/xml
-          cat > scaffold/android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          cat > scaffold/android/app/src/main/res/xml/network_security_config.xml << 'XMLEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <network-security-config>
               <base-config cleartextTrafficPermitted="true">
@@ -40,13 +40,16 @@ jobs:
                   </trust-anchors>
               </base-config>
           </network-security-config>
-          EOF
+          XMLEOF
           
-          # Patch AndroidManifest.xml
-          sed -i 's|android:usesCleartextTraffic="true"|android:usesCleartextTraffic="true"\n        android:networkSecurityConfig="@xml/network_security_config"|' scaffold/android/app/src/main/AndroidManifest.xml
+          # Patch AndroidManifest.xml to add networkSecurityConfig
+          sed -i '/android:usesCleartextTraffic="true"/a\        android:networkSecurityConfig="@xml/network_security_config"' scaffold/android/app/src/main/AndroidManifest.xml
           
-          echo "✅ Android manifest patched"
-          cat scaffold/android/app/src/main/AndroidManifest.xml | head -20
+          echo "✅ Android files patched"
+          echo "--- AndroidManifest.xml ---"
+          head -20 scaffold/android/app/src/main/AndroidManifest.xml
+          echo "--- network_security_config.xml ---"
+          cat scaffold/android/app/src/main/res/xml/network_security_config.xml
       - name: Get dependencies
         working-directory: scaffold
         run: flutter pub get
