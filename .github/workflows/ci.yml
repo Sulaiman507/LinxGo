@@ -26,17 +26,17 @@ jobs:
           rm -rf scaffold/lib scaffold/test
           cp -r lib scaffold/lib
           cp -r assets scaffold/assets 2>/dev/null || true
-          cp pubspec.yaml scaffold/
-          cp analysis_options.yaml scaffold/ 2>/dev/null || true
+          cp pubspec.yaml analysis_options.yaml scaffold/
+          # Copy Android config files
+          cp -r android scaffold/android 2>/dev/null || true
       - name: Get dependencies
         working-directory: scaffold
         run: flutter pub get
       - name: Build APK
         working-directory: scaffold
         run: flutter build apk --release
-      - name: List APK
-        run: ls -la scaffold/build/app/outputs/flutter-apk/ 2>/dev/null || find . -name "*.apk" 2>/dev/null
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: LinxGo
           path: scaffold/build/app/outputs/flutter-apk/app-release.apk
